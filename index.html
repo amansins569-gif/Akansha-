@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>For You ❤️</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Caveat:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#3a1f2b;
+    --rose:#e0708a;
+    --deep:#a23a56;
+    --gold:#c9956b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;}
+  body{
+    font-family:'Cormorant Garamond',serif;
+    background:radial-gradient(circle at 50% 30%, #1a0d14, #0a0508 70%);
+    color:#fdf4f0;
+    display:flex;align-items:center;justify-content:center;
+    padding:14px;
+    touch-action:none;
+  }
+
+  .wrap{position:relative;width:100%;max-width:460px;text-align:center;}
+
+  .ribbon{font-size:2rem;margin-bottom:4px;animation:beat 1.6s ease-in-out infinite;}
+  @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+
+  h1{font-weight:600;font-size:1.9rem;color:var(--rose);line-height:1.1;}
+  .sub{font-family:'Caveat',cursive;font-size:1.25rem;color:var(--gold);margin:4px 0 14px;}
+
+  .stats{
+    display:flex;justify-content:center;gap:22px;margin-bottom:10px;
+    font-family:'Caveat',cursive;font-size:1.3rem;color:#f6d8d4;
+  }
+  .stats b{color:var(--rose);}
+
+  #board{
+    position:relative;width:100%;
+    aspect-ratio:1/1;
+    border-radius:18px;
+    overflow:hidden;
+    background:#000;
+    box-shadow:0 0 0 1px rgba(224,112,138,.25),0 24px 60px -20px rgba(162,58,86,.6);
+    margin:0 auto;
+    touch-action:none;
+  }
+  canvas{display:block;width:100%;height:100%;}
+
+  .hud{font-family:'Caveat',cursive;font-size:1.15rem;color:var(--gold);margin-top:12px;min-height:24px;}
+
+  .controls{
+    margin-top:14px;display:grid;grid-template-columns:repeat(3,64px);
+    grid-template-rows:repeat(2,64px);gap:8px;justify-content:center;
+  }
+  .controls button{
+    font-size:1.5rem;border:none;border-radius:14px;
+    background:rgba(224,112,138,.16);color:var(--rose);
+    border:1px solid rgba(224,112,138,.3);
+    cursor:pointer;transition:.12s;
+  }
+  .controls button:active{background:rgba(224,112,138,.4);transform:scale(.94);}
+  .ctl-up{grid-column:2;grid-row:1;}
+  .ctl-left{grid-column:1;grid-row:2;}
+  .ctl-down{grid-column:2;grid-row:2;}
+  .ctl-right{grid-column:3;grid-row:2;}
+
+  .note{font-size:1rem;color:rgba(253,244,240,.5);margin-top:10px;font-style:italic;}
+
+  /* WIN / message screen */
+  .reveal-screen{
+    position:fixed;inset:0;z-index:50;
+    background:radial-gradient(circle at 50% 20%, #2a1019, #0a0508 75%);
+    display:none;flex-direction:column;align-items:center;
+    padding:30px 22px;overflow-y:auto;
+  }
+  .reveal-screen.show{display:flex;animation:fade .8s;}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .reveal-inner{max-width:540px;width:100%;}
+  .reveal .line{
+    opacity:0;transform:translateY(16px);
+    font-size:1.28rem;line-height:1.6;margin-bottom:16px;color:#fdf4f0;
+    animation:fadeUp .9s forwards;
+  }
+  .reveal .big{font-family:'Caveat',cursive;font-size:1.7rem;color:var(--rose);text-align:center;}
+  .reveal .quote{
+    text-align:center;font-style:italic;color:var(--rose);font-size:1.45rem;
+    border-top:1px solid rgba(224,112,138,.3);
+    border-bottom:1px solid rgba(224,112,138,.3);
+    padding:16px 0;margin:22px 0;
+  }
+  .reveal .final{
+    text-align:center;font-family:'Caveat',cursive;
+    font-size:2rem;color:var(--rose);margin-top:24px;
+  }
+  @keyframes fadeUp{to{opacity:1;transform:translateY(0);}}
+  .win-title{
+    text-align:center;font-family:'Caveat',cursive;
+    font-size:2.4rem;color:var(--gold);margin-bottom:8px;
+    opacity:0;animation:fadeUp .8s .2s forwards;
+  }
+
+  .rate-box{
+    margin-top:36px;text-align:center;
+    opacity:0;transform:translateY(16px);
+    border-top:1px solid rgba(224,112,138,.25);
+    padding-top:26px;
+  }
+  .rate-box.show{animation:fadeUp .8s forwards;}
+  .rate-q{font-family:'Caveat',cursive;font-size:1.8rem;color:var(--rose);}
+  .rate-sub{font-family:'Caveat',cursive;font-size:1.15rem;color:var(--gold);margin-bottom:18px;opacity:.85;}
+  .rate-grid{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:380px;margin:0 auto;
+  }
+  .rate-grid button{
+    font-family:'Caveat',cursive;font-size:1.5rem;
+    padding:12px 0;border:1px solid rgba(224,112,138,.35);
+    border-radius:12px;background:rgba(224,112,138,.12);
+    color:#fdf4f0;cursor:pointer;transition:.15s;
+  }
+  .rate-grid button:hover{background:rgba(224,112,138,.4);transform:translateY(-3px);}
+  .rate-grid button:active{transform:scale(.92);}
+  .rate-grid button.picked{background:var(--rose);color:#2a1019;border-color:var(--rose);transform:scale(1.08);}
+  .rate-result{
+    margin-top:20px;min-height:30px;
+    font-family:'Caveat',cursive;font-size:1.6rem;color:var(--gold);
+  }
+
+  .hearts{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden;}
+  .hearts span{position:absolute;bottom:-40px;color:rgba(224,112,138,.5);animation:rise linear forwards;}
+  @keyframes rise{to{transform:translateY(-115vh) rotate(360deg);opacity:0;}}
+</style>
+</head>
+<body>
+  <div class="wrap" id="gameWrap">
+    <div class="ribbon">🕯️</div>
+    <h1>Reach the heart</h1>
+    <p class="sub">find your way through the dark maze… the message is hidden inside 😏</p>
+    <div class="stats">
+      <span>Tries: <b id="tries">0</b></span>
+      <span>Time: <b id="time">0s</b></span>
+    </div>
+    <div id="board"><canvas id="cv"></canvas></div>
+    <div class="hud" id="hud">use the arrow keys or the buttons below</div>
+    <div class="controls">
+      <button class="ctl-up" onclick="move(0,-1)">▲</button>
+      <button class="ctl-left" onclick="move(-1,0)">◀</button>
+      <button class="ctl-down" onclick="move(0,1)">▼</button>
+      <button class="ctl-right" onclick="move(1,0)">▶</button>
+    </div>
+    <p class="note">tip: move carefully — your light only reaches so far ❤️</p>
+  </div>
+
+  <div class="reveal-screen" id="reveal">
+    <div class="hearts" id="hearts"></div>
+    <div class="reveal-inner">
+      <div class="win-title">You made it ❤️</div>
+      <div class="reveal" id="msg"></div>
+
+      <div class="rate-box" id="rateBox">
+        <p class="rate-q">Okay now rate me out of 10 😤</p>
+        <p class="rate-sub">(be honest… ya nahi, 10 hi dena 😏)</p>
+        <div class="rate-grid" id="rateGrid"></div>
+        <div class="rate-result" id="rateResult"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ============ MESSAGE (edit freely) ============ */
+const message = [
+  {c:"line big", t:"Happy Anniversary baby ❤️"},
+  {c:"line", t:"Ik m late hogya kaafi… jab tune mujhe wish kiya tune hi itna sab kar diya mere liye ke mereko samajh hi nahi aaya ab m kya karu."},
+  {c:"line", t:"M kaafi kuch karna chahta hu par kar ni paya. I'm sorry."},
+  {c:"line big", t:"Me tujhe bas itna hi bolunga — thank you mujhe jhelne ke liye itne time tak."},
+  {c:"line", t:"Tere saare dukh dard door kar dunga me ek din. Me apni life me kabhi kisi ko leke itna sure nahi hua jitna tujhe leke."},
+  {c:"line", t:"M seekh raha hu kaafi kuch."},
+  {c:"line", t:"Hmari shaadi nahi hui par fir bhi ghar me aisa lagta hai — jab bhi koi aata hai to mujhse mere baare me kam par tere baare me zyada baat karta hai, aur tab mujhe aisa lagta hai k I'm already married aur tu maike gayi hai apne. lol"},
+  {c:"quote", t:'"Ratti bhar bhi kaamil nahi hu tere bina."'},
+  {c:"line", t:"Manta hu m kabhi kabhi nahi samajh pata ya nahi kar pata, but I'm giving my best aur aage bhi isse zyada hi dunga — aur I'll make sure tujhe ek mature insaan banke dikhaunga. Kyuki agar tu na hoti to m sochta bhi nahi ye sab ke baare me."},
+  {c:"line big", t:"Meri life ka ek hi goal hai — tujhe pyaar karna, safe rakhna, khush rakhna, teri anxiety aur dukh sabse door rakhna. In short… \"TU\"."},
+  {c:"final", t:"So Happy 4 Months to us, mera bacha.<br>I love you so f***ing much ❤️"}
+];
+/* =============================================== */
+
+/* ---- Maze setup ---- */
+const N = 15;               // grid size (odd). Bigger = harder.
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let maze, player, goal, cell, started=false, startTime=0, tries=0, timer;
+
+function sizeCanvas(){
+  const b=document.getElementById('board');
+  const dpr=window.devicePixelRatio||1;
+  const s=b.clientWidth;
+  cv.width=s*dpr;cv.height=s*dpr;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  cell=s/N;
+}
+window.addEventListener('resize',()=>{sizeCanvas();draw();});
+
+/* recursive backtracker maze generation */
+function genMaze(){
+  // grid of walls; cells at odd indices
+  maze=Array.from({length:N},()=>Array(N).fill(1));
+  function carve(x,y){
+    maze[y][x]=0;
+    const dirs=[[0,-2],[0,2],[-2,0],[2,0]].sort(()=>Math.random()-0.5);
+    for(const [dx,dy] of dirs){
+      const nx=x+dx, ny=y+dy;
+      if(nx>0&&nx<N-1&&ny>0&&ny<N-1&&maze[ny][nx]===1){
+        maze[y+dy/2][x+dx/2]=0;
+        carve(nx,ny);
+      }
+    }
+  }
+  carve(1,1);
+  player={x:1,y:1};
+  goal={x:N-2,y:N-2};
+  maze[goal.y][goal.x]=0;
+}
+
+function draw(){
+  const s=cv.clientWidth;
+  ctx.clearRect(0,0,s,s);
+  ctx.fillStyle="#05030a";
+  ctx.fillRect(0,0,s,s);
+
+  const px=(player.x+0.5)*cell, py=(player.y+0.5)*cell;
+  const R=cell*2.6; // vision radius — small = hard
+
+  // draw maze walls only within vision
+  for(let y=0;y<N;y++){
+    for(let x=0;x<N;x++){
+      const cx=(x+0.5)*cell, cy=(y+0.5)*cell;
+      const d=Math.hypot(cx-px,cy-py);
+      if(d>R+cell)continue;
+      const fade=Math.max(0,1-(d/(R)));
+      if(maze[y][x]===1){
+        ctx.fillStyle=`rgba(60,24,40,${0.85*fade+0.05})`;
+        ctx.fillRect(x*cell,y*cell,cell+0.5,cell+0.5);
+      }
+    }
+  }
+
+  // goal glow (only visible when near)
+  const gx=(goal.x+0.5)*cell, gy=(goal.y+0.5)*cell;
+  const dg=Math.hypot(gx-px,gy-py);
+  if(dg<R*1.4){
+    const gv=Math.max(.15,1-dg/(R*1.4));
+    ctx.font=`${cell*0.9}px serif`;
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.globalAlpha=gv;
+    ctx.fillText("❤",gx,gy);
+    ctx.globalAlpha=1;
+  }
+
+  // dark vignette mask around player (the "torch")
+  const grd=ctx.createRadialGradient(px,py,cell*0.6,px,py,R*1.7);
+  grd.addColorStop(0,"rgba(0,0,0,0)");
+  grd.addColorStop(0.55,"rgba(5,3,8,0.55)");
+  grd.addColorStop(1,"rgba(5,3,8,1)");
+  ctx.fillStyle=grd;
+  ctx.fillRect(0,0,s,s);
+
+  // player heart with glow
+  ctx.shadowColor="rgba(224,112,138,0.9)";
+  ctx.shadowBlur=cell*0.9;
+  ctx.font=`${cell*0.85}px serif`;
+  ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillStyle="#ff7e9d";
+  ctx.fillText("❤",px,py);
+  ctx.shadowBlur=0;
+}
+
+function startTimer(){
+  startTime=Date.now();
+  timer=setInterval(()=>{
+    document.getElementById('time').textContent=Math.floor((Date.now()-startTime)/1000)+'s';
+  },250);
+}
+
+function move(dx,dy){
+  if(!started){
+    started=true;tries++;document.getElementById('tries').textContent=tries;
+    startTimer();
+    document.getElementById('hud').textContent="remember the path… you're the only heart here ❤️";
+  }
+  const nx=player.x+dx, ny=player.y+dy;
+  if(nx<0||ny<0||nx>=N||ny>=N)return;
+  if(maze[ny][nx]===1){
+    // hit a wall — flash, no reset (genuinely hard but fair)
+    flashWall();
+    return;
+  }
+  player.x=nx;player.y=ny;
+  draw();
+  if(player.x===goal.x&&player.y===goal.y){win();}
+}
+
+let flashing=false;
+function flashWall(){
+  if(flashing)return;flashing=true;
+  const board=document.getElementById('board');
+  board.style.boxShadow="0 0 0 2px rgba(224,112,138,.9),0 0 30px rgba(224,112,138,.5)";
+  setTimeout(()=>{board.style.boxShadow="";flashing=false;},150);
+}
+
+document.addEventListener('keydown',e=>{
+  const k={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0],
+           w:[0,-1],s:[0,1],a:[-1,0],d:[1,0]}[e.key];
+  if(k){e.preventDefault();move(k[0],k[1]);}
+});
+
+/* swipe support on the board (touch events, won't block button taps) */
+let touchStart=null;
+const board=document.getElementById('board');
+board.addEventListener('touchstart',e=>{
+  const t=e.touches[0];touchStart={x:t.clientX,y:t.clientY};
+},{passive:true});
+board.addEventListener('touchend',e=>{
+  if(!touchStart)return;
+  const t=e.changedTouches[0];
+  const dx=t.clientX-touchStart.x, dy=t.clientY-touchStart.y;
+  if(Math.abs(dx)<18&&Math.abs(dy)<18){touchStart=null;return;}
+  if(Math.abs(dx)>Math.abs(dy))move(dx>0?1:-1,0);
+  else move(0,dy>0?1:-1);
+  touchStart=null;
+},{passive:true});
+
+function win(){
+  clearInterval(timer);
+  const t=Math.floor((Date.now()-startTime)/1000);
+  document.getElementById('reveal').classList.add('show');
+  const msg=document.getElementById('msg');
+  let html='';
+  message.forEach((m,i)=>{
+    html+=`<div class="${m.c}" style="animation-delay:${0.4+i*0.55}s">${m.t}</div>`;
+  });
+  msg.innerHTML=html;
+  document.querySelector('.win-title').textContent=`You made it ❤️ (${tries} ${tries===1?'try':'tries'}, ${t}s)`;
+  burstHearts();
+
+  // build rating buttons
+  const grid=document.getElementById('rateGrid');
+  grid.innerHTML='';
+  for(let n=1;n<=10;n++){
+    const b=document.createElement('button');
+    b.textContent=n;
+    b.onclick=()=>pickRating(n,b);
+    grid.appendChild(b);
+  }
+  // reveal rating box after the message animation has played out
+  const revealDelay=(0.4+message.length*0.55+1)*1000;
+  setTimeout(()=>document.getElementById('rateBox').classList.add('show'),revealDelay);
+}
+
+const ratingReactions={
+  1:"1?! 😭 chal koi nahi… ab maze fir se khel 😤",
+  2:"2 only? dil tod diya tune 💔 par theek hai",
+  3:"3… mujhe lagta hai tu jhooth bol rahi hai 🙄",
+  4:"4? thoda aur try karta hu next time 😅",
+  5:"5/10 — beech ka, fair enough 😐❤️",
+  6:"6 thik hai… still room to impress you 😏",
+  7:"7! ab baat ban rahi hai 😍",
+  8:"8/10 — okay okay I'll take it 🥹❤️",
+  9:"9?! almost perfect, jaise tu 😘",
+  10:"10/10 — knew it. main hi best hu 😎❤️ I love you"
+};
+
+function pickRating(n,btn){
+  document.querySelectorAll('#rateGrid button').forEach(b=>b.classList.remove('picked'));
+  btn.classList.add('picked');
+  const res=document.getElementById('rateResult');
+  res.textContent=ratingReactions[n];
+  if(n>=8){burstHearts();}
+}
+
+function burstHearts(){
+  const wrap=document.getElementById('hearts');
+  const emo=['❤','🤍','💗','🌸'];
+  for(let i=0;i<40;i++){
+    const sp=document.createElement('span');
+    sp.textContent=emo[Math.floor(Math.random()*emo.length)];
+    sp.style.left=Math.random()*100+'%';
+    sp.style.fontSize=(16+Math.random()*24)+'px';
+    sp.style.animationDuration=(6+Math.random()*7)+'s';
+    sp.style.animationDelay=(Math.random()*3)+'s';
+    wrap.appendChild(sp);
+  }
+}
+
+/* init */
+function init(){sizeCanvas();genMaze();draw();}
+init();
+</script>
+</body>
+</html>
